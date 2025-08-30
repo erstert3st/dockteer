@@ -1,5 +1,12 @@
-FROM node:22@sha256:3266bc9e8bee1acc8a77386eefaf574987d2729b8c5ec35b0dbd6ddbc40b0ce2
-
+FROM node:24.7-trixie-slim
+#og is 2.2gb mine is still 1.3gb -.-"
+# ████████╗ ██████╗ ██████╗  ██████╗     ██████╗ ██╗   ██╗███╗   ██╗   ███████╗██╗  ██╗    ███████╗ ██████╗ ██████╗     ██████╗ ██╗   ██╗██╗██████╗     ██████╗  ██████╗ ██╗██████╗ 
+# ╚══██╔══╝██╔═══██╗██╔══██╗██╔═══██╗    ██╔══██╗██║   ██║████╗  ██║   ██╔════╝██║  ██║    ██╔════╝██╔═══██╗██╔══██╗    ██╔══██╗██║   ██║██║██╔══██╗    ██╔══██╗██╔════╝ ██║██╔══██╗
+#    ██║   ██║   ██║██║  ██║██║   ██║    ██████╔╝██║   ██║██╔██╗ ██║   ███████╗███████║    █████╗  ██║   ██║██████╔╝    ██████╔╝██║   ██║██║██║  ██║    ██████╔╝██║  ███╗██║██║  ██║
+#    ██║   ██║   ██║██║  ██║██║   ██║    ██╔══██╗██║   ██║██║╚██╗██║   ╚════██║██╔══██║    ██╔══╝  ██║   ██║██╔══██╗    ██╔═══╝ ██║   ██║██║██║  ██║    ██╔═══╝ ██║   ██║██║██║  ██║
+#    ██║   ╚██████╔╝██████╔╝╚██████╔╝    ██║  ██║╚██████╔╝██║ ╚████║██╗███████║██║  ██║    ██║     ╚██████╔╝██║  ██║    ██║     ╚██████╔╝██║██████╔╝    ██║     ╚██████╔╝██║██████╔╝
+#    ╚═╝    ╚═════╝ ╚═════╝  ╚═════╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝╚══════╝╚═╝  ╚═╝    ╚═╝      ╚═════╝ ╚═╝  ╚═╝    ╚═╝      ╚═════╝ ╚═╝╚═════╝     ╚═╝      ╚═════╝ ╚═╝╚═════╝ 
+#                                                                                                                                                                                   
 # Configure default locale (important for chrome-headless-shell).
 ENV LANG=en_US.UTF-8 
 # UID of the non-root user 'pptruser'
@@ -13,28 +20,33 @@ ENV PUPPETEER_CACHE_DIR=/home/pptruser/.cache/puppeteer
 # Add pptruser.
 RUN groupadd -r pptruser && useradd -u $PPTRUSER_UID -rm -g pptruser -G audio,video pptruser
 
-USER $PPTRUSER_UID
+# USER $PPTRUSER_UID
 
 WORKDIR /home/pptruser
 COPY . /home/pptruser/
 
 
 # Install @puppeteer/browsers, puppeteer and puppeteer-core into /home/pptruser/node_modules.
-RUN npm i 
+# RUN npm i 
 
 # Install system dependencies as root.
-USER root
+# USER root
 # Overriding the cache directory to install the deps for the Chrome
 # version installed for pptruser. 
 # Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
 # Note: this installs the necessary libs to make the bundled version of Chrome that Puppeteer
 # installs, work.
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-khmeros \
-    fonts-kacst fonts-freefont-ttf dbus dbus-x11 && \
+
+RUN su pptruser -c "npm i" && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-khmeros fonts-kacst-one \
+    fonts-freefont-ttf dbus dbus-x11 && \
     npx puppeteer browsers install chrome --install-deps  && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* 
+    rm -rf /var/lib/apt/lists/* && \
+    npm uninstall @puppeteer/browsers && \
+    chown -R pptruser:pptruser  /home/pptruser/
 
-USER $PPTRUSER_UID
+# USER $PPTRUSER_UID
+ENTRYPOINT [ "init.sh" ]
 # Generate THIRD_PARTY_NOTICES using chrome --credits.

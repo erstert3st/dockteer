@@ -7,7 +7,8 @@ const puppeteer = require('puppeteer');
 
 (async () => {
   const browser = await puppeteer.launch({
-    dumpio: true,
+    headless: true, // Set to true if you want to run headless
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   const page = await browser.newPage();
   await page.goto('https://example.com');
